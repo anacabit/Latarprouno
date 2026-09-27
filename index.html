@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarjetas Digitales - Ofertas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; color: #333; }
+        .container { max-width: 100%; display: flex; flex-direction: column; min-height: 100vh; }
+        .tabs { display: flex; gap: 0; border-bottom: 1px solid #ddd; background: white; overflow-x: auto; }
+        .tab-btn { flex-shrink: 0; padding: 14px 16px; font-size: 13px; font-weight: 500; background: white; border: none; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; }
+        .tab-btn:hover { background: #f9f9f9; }
+        .tab-btn.active { color: #0066cc; border-bottom-color: #0066cc; }
+        .tab-content { display: none; padding: 1rem; overflow-y: auto; max-height: 60vh; }
+        .tab-content.active { display: block; }
+        .section { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+        .section h3 { margin-bottom: 1rem; font-size: 14px; font-weight: 600; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 6px; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: inherit; font-size: 13px; }
+        .form-group textarea { resize: vertical; min-height: 70px; }
+        .form-row { display: flex; gap: 10px; }
+        .form-row > * { flex: 1; }
+        .color-picker { display: flex; gap: 8px; align-items: center; }
+        .color-picker input[type="color"] { width: 44px; height: 44px; border: 1px solid #ddd; cursor: pointer; }
+        .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 1rem; }
+        .gallery-item { position: relative; aspect-ratio: 1; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+        .remove-btn { position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; background: rgba(0,0,0,0.6); border: none; border-radius: 50%; color: white; cursor: pointer; font-size: 14px; }
+        .gallery-placeholder { padding: 1rem; border: 2px dashed #ddd; border-radius: 6px; text-align: center; cursor: pointer; color: #999; font-size: 12px; }
+        .gallery-placeholder:hover { background: #f9f9f9; }
+        .file-hidden { display: none; }
+        .texture-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 1rem; }
+        .texture-option { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; }
+        .preview-card { border: 1px solid #ddd; border-radius: 12px; overflow: hidden; margin-bottom: 1rem; background: white; }
+        .preview-header { padding: 1rem; border-bottom: 1px solid #ddd; }
+        .preview-business-name { font-size: 18px; font-weight: 600; margin: 0 0 4px; }
+        .preview-day { font-size: 12px; color: #999; margin: 0; }
+        .preview-gallery { width: 100%; height: 200px; display: flex; align-items: center; justify-content: center; background: #f0f0f0; position: relative; overflow: hidden; }
+        .preview-gallery img { width: 100%; height: 100%; object-fit: cover; }
+        .gallery-nav { position: absolute; top: 50%; width: 100%; display: flex; justify-content: space-between; padding: 0 8px; transform: translateY(-50%); }
+        .gallery-nav button { background: rgba(0,0,0,0.4); border: none; width: 28px; height: 28px; border-radius: 50%; color: white; cursor: pointer; font-size: 16px; }
+        .gallery-nav button:hover { background: rgba(0,0,0,0.6); }
+        .gallery-counter { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.5); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
+        .preview-content { padding: 1rem; }
+        .preview-title { font-size: 18px; margin: 0 0 8px; font-weight: 600; }
+        .preview-description { font-size: 13px; margin: 0 0 12px; line-height: 1.5; }
+        .preview-footer { display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid #ddd; margin-bottom: 12px; font-size: 13px; }
+        .preview-price { font-size: 20px; font-weight: 600; }
+        .preview-info { font-size: 12px; line-height: 1.6; }
+        .actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 1rem; }
+        .btn { padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; background: white; color: #333; transition: all 0.2s; }
+        .btn:hover { background: #f9f9f9; }
+        .btn-primary { background: #0066cc; color: white; border-color: #0066cc; }
+        .btn-primary:hover { background: #0052a3; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { max-width: 90%; position: relative; }
+        .modal-content img { width: 100%; height: auto; max-height: 80vh; }
+        .modal-close { position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.9); border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 18px; cursor: pointer; }
+        .slider-group { display: flex; gap: 8px; align-items: center; }
+        .slider-group input[type="range"] { flex: 1; }
+        .slider-value { font-size: 12px; color: #999; min-width: 30px; text-align: right; }
+        .color-btn { padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; background: white; transition: all 0.2s; color: #333; }
+        .color-btn:hover { border-color: #0066cc; background: #f0f8ff; }
+        @media (max-width: 480px) {
+            .section { padding: 0.75rem; }
+            .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+            .texture-grid { grid-template-columns: 1fr; }
+            .tab-btn { padding: 12px 12px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('info')">Datos</button>
+        <button class="tab-btn" onclick="switchTab('offer')">Oferta</button>
+        <button class="tab-btn" onclick="switchTab('design')">Diseño</button>
+        <button class="tab-btn" onclick="switchTab('preview')">Vista previa</button>
+    </div>
+
+    <div id="info" class="tab-content active">
+        <div class="section">
+            <h3>Nombre del negocio</h3>
+            <div class="form-group">
+                <label>Nombre del restaurante / tienda</label>
+                <input type="text" id="businessName" placeholder="Ej: La Arepa Criolla" onchange="updatePreview()">
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Contacto</h3>
+            <div class="form-group">
+                <label>Teléfono 1</label>
+                <input type="text" id="phone1" placeholder="+58 123-4567" onchange="updatePreview()">
+            </div>
+            <div class="form-group">
+                <label>Teléfono 2</label>
+                <input type="text" id="phone2" placeholder="+58 987-6543" onchange="updatePreview()">
+            </div>
+            <div class="form-group">
+                <label>Dirección</label>
+                <input type="text" id="address" placeholder="Calle principal 123" onchange="updatePreview()">
+            </div>
+            <div class="form-group">
+                <label>Instagram</label>
+                <input type="text" id="instagram" placeholder="@tuinstagram" onchange="updatePreview()">
+            </div>
+            <div class="form-group">
+                <label>Facebook</label>
+                <input type="text" id="facebook" placeholder="Tu página" onchange="updatePreview()">
+            </div>
+            <div class="form-group">
+                <label>Reservación</label>
+                <input type="text" id="reservation" placeholder="Teléfono o link" onchange="updatePreview()">
+            </div>
+            <div class="form-group">
+                <label>Menú (URL)</label>
+                <input type="text" id="menuUrl" placeholder="https://..." onchange="updatePreview()">
+            </div>
+        </div>
+    </div>
+
+    <div id="offer" class="tab-content">
+        <div class="section">
+            <h3>Promoción</h3>
+            <div class="form-group">
+                <label>Día de la promoción</label>
+                <input type="text" id="dayOfWeek" placeholder="Lunes, Martes, etc." onchange="updatePreview()">
+            </div>
+            <div class="form-group">
+                <label>Nombre del plato / producto</label>
+                <input type="text" id="dishName" placeholder="Arepa rellena" onchange="updatePreview()">
+            </div>
+            <div class="form-group">
+                <label>Descripción</label>
+                <textarea id="dishDescription" placeholder="Describe el plato o producto..." onchange="updatePreview()"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Precio</label>
+                <input type="text" id="price" placeholder="5.000 Bs" onchange="updatePreview()">
+            </div>
+            <div class="form-group">
+                <label>Horario</label>
+                <input type="text" id="schedule" placeholder="12 PM - 8 PM" onchange="updatePreview()">
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Fotos (hasta 6)</h3>
+            <div class="gallery-grid" id="galleryGrid">
+                <label class="gallery-item">
+                    <div id="slot0" class="gallery-placeholder" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; border: 2px dashed #ddd; cursor: pointer;">📷</div>
+                    <input type="file" accept="image/*" class="file-hidden" onchange="loadPhoto(event, 0)">
+                </label>
+                <label class="gallery-item">
+                    <div id="slot1" class="gallery-placeholder" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; border: 2px dashed #ddd; cursor: pointer;">📷</div>
+                    <input type="file" accept="image/*" class="file-hidden" onchange="loadPhoto(event, 1)">
+                </label>
+                <label class="gallery-item">
+                    <div id="slot2" class="gallery-placeholder" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; border: 2px dashed #ddd; cursor: pointer;">📷</div>
+                    <input type="file" accept="image/*" class="file-hidden" onchange="loadPhoto(event, 2)">
+                </label>
+                <label class="gallery-item">
+                    <div id="slot3" class="gallery-placeholder" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; border: 2px dashed #ddd; cursor: pointer;">📷</div>
+                    <input type="file" accept="image/*" class="file-hidden" onchange="loadPhoto(event, 3)">
+                </label>
+                <label class="gallery-item">
+                    <div id="slot4" class="gallery-placeholder" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; border: 2px dashed #ddd; cursor: pointer;">📷</div>
+                    <input type="file" accept="image/*" class="file-hidden" onchange="loadPhoto(event, 4)">
+                </label>
+                <label class="gallery-item">
+                    <div id="slot5" class="gallery-placeholder" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; border: 2px dashed #ddd; cursor: pointer;">📷</div>
+                    <input type="file" accept="image/*" class="file-hidden" onchange="loadPhoto(event, 5)">
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div id="design" class="tab-content">
+        <div class="section">
+            <h3>Fondo y textura</h3>
+            <div class="texture-grid">
+                <label class="texture-option">
+                    <input type="radio" name="texture" value="solid" checked onchange="updatePreview()"> Sólido
+                </label>
+                <label class="texture-option">
+                    <input type="radio" name="texture" value="circles" onchange="updatePreview()"> Círculos
+                </label>
+                <label class="texture-option">
+                    <input type="radio" name="texture" value="stripes" onchange="updatePreview()"> Rayas
+                </label>
+                <label class="texture-option">
+                    <input type="radio" name="texture" value="diagonal" onchange="updatePreview()"> Diagonal
+                </label>
+                <label class="texture-option">
+                    <input type="radio" name="texture" value="dots" onchange="updatePreview()"> Puntos
+                </label>
+                <label class="texture-option">
+                    <input type="radio" name="texture" value="stars" onchange="updatePreview()"> Estrellas
+                </label>
+            </div>
+            <div class="form-group">
+                <label>Color de fondo</label>
+                <div class="color-picker">
+                    <input type="color" id="bgColor" value="#ffffff" onchange="updatePreview()">
+                    <input type="text" id="bgColorText" value="#ffffff" onchange="syncColor('bgColor')">
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Tipografía</h3>
+            <div class="form-group">
+                <label>Tipo de letra</label>
+                <select id="fontFamily" onchange="updatePreview()">
+                    <option value="Arial">Arial</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="'Courier New'">Courier New</option>
+                    <option value="Verdana">Verdana</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Tamaño del título</label>
+                <div class="slider-group">
+                    <input type="range" id="titleSize" min="14" max="32" value="20" onchange="updatePreview()">
+                    <span class="slider-value" id="titleSizeValue">20px</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Tamaño del cuerpo</label>
+                <div class="slider-group">
+                    <input type="range" id="bodySize" min="11" max="20" value="13" onchange="updatePreview()">
+                    <span class="slider-value" id="bodySizeValue">13px</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label><input type="checkbox" id="boldTitle" onchange="updatePreview()"> Título en negrita (bold)</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Paleta de colores</h3>
+            <div class="form-group" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 1rem;">
+                <button class="color-btn" onclick="setPalette('#000000', '#000000', '#333333', '#ff6b35')">Negro</button>
+                <button class="color-btn" onclick="setPalette('#1a5f7a', '#1a5f7a', '#2c3e50', '#ff6b35')">Azul</button>
+                <button class="color-btn" onclick="setPalette('#8b0000', '#8b0000', '#333333', '#ff6b35')">Rojo</button>
+                <button class="color-btn" onclick="setPalette('#228b22', '#228b22', '#333333', '#ffd700')">Verde</button>
+                <button class="color-btn" onclick="setPalette('#663399', '#663399', '#333333', '#ff6b35')">Púrpura</button>
+                <button class="color-btn" onclick="setPalette('#ff6b35', '#ff6b35', '#333333', '#2c3e50')">Naranja</button>
+                <button class="color-btn" onclick="setPalette('#d4af37', '#d4af37', '#333333', '#8b0000')">Oro</button>
+                <button class="color-btn" onclick="setPalette('#ff1493', '#ff1493', '#333333', '#fff')">Rosa</button>
+                <button class="color-btn" onclick="setPalette('#00bfff', '#00bfff', '#333333', '#ff6b35')">Cielo</button>
+                <button class="color-btn" onclick="setPalette('#ffa500', '#ffa500', '#333333', '#2c3e50')">Amarillo</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Personalizar colores</h3>
+            <div class="form-group">
+                <label>Color del nombre</label>
+                <div class="color-picker">
+                    <input type="color" id="nameColor" value="#000000" onchange="updatePreview()">
+                    <input type="text" id="nameColorText" value="#000000" onchange="syncColor('nameColor')">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Color del título</label>
+                <div class="color-picker">
+                    <input type="color" id="titleColor" value="#000000" onchange="updatePreview()">
+                    <input type="text" id="titleColorText" value="#000000" onchange="syncColor('titleColor')">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Color del cuerpo</label>
+                <div class="color-picker">
+                    <input type="color" id="textColor" value="#333333" onchange="updatePreview()">
+                    <input type="text" id="textColorText" value="#333333" onchange="syncColor('textColor')">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Color del precio</label>
+                <div class="color-picker">
+                    <input type="color" id="priceColor" value="#ff6b35" onchange="updatePreview()">
+                    <input type="text" id="priceColorText" value="#ff6b35" onchange="syncColor('priceColor')">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="preview" class="tab-content">
+        <div class="preview-card" id="previewCard">
+            <div class="preview-header">
+                <p class="preview-business-name" id="previewBusinessName">Tu Negocio</p>
+                <p class="preview-day" id="previewDay">Lunes</p>
+            </div>
+            <div class="preview-gallery" id="previewGallery">
+                <img id="galleryImg" style="display: none;">
+                <span id="galleryPlaceholder">Fotos del plato</span>
+                <div class="gallery-nav" id="galleryNav" style="display: none;">
+                    <button onclick="prevPhoto()">❮</button>
+                    <button onclick="nextPhoto()">❯</button>
+                </div>
+                <div class="gallery-counter" id="galleryCounter" style="display: none;"></div>
+            </div>
+            <div class="preview-content">
+                <h2 class="preview-title" id="previewDishName">Tu plato</h2>
+                <p class="preview-description" id="previewDescription">Descripción</p>
+                <div class="preview-footer">
+                    <div class="preview-price" id="previewPrice">$0</div>
+                    <div id="previewSchedule">Horario</div>
+                </div>
+                <div class="preview-info" id="previewInfo"></div>
+            </div>
+        </div>
+        <div class="actions">
+            <button class="btn btn-primary" onclick="downloadCard()">📥 Descargar PNG</button>
+            <button class="btn" onclick="shareWhatsapp()">💬 WhatsApp</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal" class="modal" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <img id="modalImg">
+        <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+</div>
+
+<script>
+let fotos = [null, null, null, null, null, null];
+let fotosGrandes = [null, null, null, null, null, null];
+let indiceActual = 0;
+
+function switchTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+    event.target.classList.add('active');
+}
+
+function resizeImage(dataUrl, size, callback) {
+    const img = new Image();
+    img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, size, size);
+        callback(canvas.toDataURL('image/png'));
+    };
+    img.src = dataUrl;
+}
+
+function loadFromStorage() {
+    try {
+        const stored = localStorage.getItem('fotosApp');
+        if (stored) {
+            const data = JSON.parse(stored);
+            fotos = data.fotos || [null, null, null, null, null, null];
+            fotosGrandes = data.fotosGrandes || [null, null, null, null, null, null];
+            fotos.forEach((_, i) => renderSlot(i));
+            updatePreview();
+        }
+    } catch (e) {
+        console.log('No hay datos guardados');
+    }
+}
+
+function saveToStorage() {
+    try {
+        localStorage.setItem('fotosApp', JSON.stringify({
+            fotos: fotos,
+            fotosGrandes: fotosGrandes
+        }));
+    } catch (e) {
+        console.log('Error guardando fotos');
+    }
+}
+
+function loadPhoto(e, index) {
+    const archivo = e.target.files[0];
+    if (!archivo) return;
+    
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const dataUrl = ev.target.result;
+        
+        resizeImage(dataUrl, 4, (fotoChica) => {
+            fotos[index] = fotoChica;
+            
+            resizeImage(dataUrl, 7, (fotoGrande) => {
+                fotosGrandes[index] = fotoGrande;
+                renderSlot(index);
+                updatePreview();
+                saveToStorage();
+            });
+        });
+    };
+    reader.readAsDataURL(archivo);
+    e.target.value = '';
+}
+
+function renderSlot(index) {
+    const slot = document.getElementById('slot' + index);
+    const label = slot.parentElement;
+    
+    if (fotos[index]) {
+        slot.innerHTML = `
+            <div style="position: relative; width: 100%; height: 100%;">
+                <img src="${fotos[index]}" onclick="openModal(${index})" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;">
+                <button class="remove-btn" onclick="removeFoto(${index})" style="position: absolute; top: 2px; right: 2px;">×</button>
+            </div>
+        `;
+    } else {
+        slot.innerHTML = '📷';
+        slot.style.display = 'flex';
+        slot.style.alignItems = 'center';
+        slot.style.justifyContent = 'center';
+        slot.style.border = '2px dashed #ddd';
+        slot.style.cursor = 'pointer';
+    }
+}
+
+function removeFoto(index) {
+    fotos[index] = null;
+    fotosGrandes[index] = null;
+    renderSlot(index);
+    updatePreview();
+    saveToStorage();
+}
+
+function getFotosActivas() {
+    return fotos.filter(f => f !== null);
+}
+
+function getIndiceEnActivas(index) {
+    const activas = getFotosActivas();
+    const foto = fotos[index];
+    return activas.indexOf(foto);
+}
+
+function prevPhoto() {
+    const activas = getFotosActivas();
+    if (activas.length === 0) return;
+    
+    const indiceEnActivas = getIndiceEnActivas(indiceActual);
+    let nuevoIndice = (indiceEnActivas - 1 + activas.length) % activas.length;
+    indiceActual = fotos.indexOf(activas[nuevoIndice]);
+    updatePreview();
+}
+
+function nextPhoto() {
+    const activas = getFotosActivas();
+    if (activas.length === 0) return;
+    
+    const indiceEnActivas = getIndiceEnActivas(indiceActual);
+    let nuevoIndice = (indiceEnActivas + 1) % activas.length;
+    indiceActual = fotos.indexOf(activas[nuevoIndice]);
+    updatePreview();
+}
+
+function openModal(i) {
+    if (fotosGrandes[i]) {
+        document.getElementById('modalImg').src = fotosGrandes[i];
+        document.getElementById('modal').classList.add('active');
+    }
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.remove('active');
+}
+
+function syncColor(id) {
+    const textInput = document.getElementById(id + 'Text');
+    const colorInput = document.getElementById(id);
+    if (textInput.value.match(/^#[0-9A-F]{6}$/i)) {
+        colorInput.value = textInput.value;
+        updatePreview();
+    }
+}
+
+function setPalette(nameColor, titleColor, textColor, priceColor) {
+    document.getElementById('nameColor').value = nameColor;
+    document.getElementById('nameColorText').value = nameColor;
+    document.getElementById('titleColor').value = titleColor;
+    document.getElementById('titleColorText').value = titleColor;
+    document.getElementById('textColor').value = textColor;
+    document.getElementById('textColorText').value = textColor;
+    document.getElementById('priceColor').value = priceColor;
+    document.getElementById('priceColorText').value = priceColor;
+    updatePreview();
+}
+
+function generateTexture() {
+    const texture = document.querySelector('input[name="texture"]:checked').value;
+    const bgColor = document.getElementById('bgColor').value;
+    
+    if (texture === 'solid') return bgColor;
+    
+    let svg = '<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="' + bgColor + '"/>';
+    
+    if (texture === 'circles') {
+        svg += '<circle cx="25" cy="25" r="8" fill="rgba(0,0,0,0.1)"/><circle cx="75" cy="25" r="8" fill="rgba(0,0,0,0.1)"/><circle cx="25" cy="75" r="8" fill="rgba(0,0,0,0.1)"/><circle cx="75" cy="75" r="8" fill="rgba(0,0,0,0.1)"/>';
+    } else if (texture === 'stripes') {
+        svg += '<line x1="0" y1="0" x2="0" y2="100" stroke="rgba(0,0,0,0.1)" stroke-width="10"/><line x1="20" y1="0" x2="20" y2="100" stroke="rgba(0,0,0,0.1)" stroke-width="10"/>';
+    } else if (texture === 'diagonal') {
+        svg += '<line x1="0" y1="0" x2="100" y2="100" stroke="rgba(0,0,0,0.1)" stroke-width="2"/><line x1="20" y1="0" x2="100" y2="80" stroke="rgba(0,0,0,0.1)" stroke-width="2"/>';
+    } else if (texture === 'dots') {
+        svg += '<circle cx="20" cy="20" r="3" fill="rgba(0,0,0,0.15)"/><circle cx="60" cy="20" r="3" fill="rgba(0,0,0,0.15)"/><circle cx="20" cy="60" r="3" fill="rgba(0,0,0,0.15)"/><circle cx="60" cy="60" r="3" fill="rgba(0,0,0,0.15)"/>';
+    } else if (texture === 'stars') {
+        svg += '<path d="M50,10 L60,35 L85,35 L65,50 L75,75 L50,60 L25,75 L35,50 L15,35 L40,35 Z" fill="rgba(0,0,0,0.1)"/>';
+    }
+    
+    svg += '</svg>';
+    return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
+}
+
+function updatePreview() {
+    const bgValue = generateTexture();
+    const card = document.getElementById('previewCard');
+    const texture = document.querySelector('input[name="texture"]:checked').value;
+    
+    if (texture === 'solid') {
+        card.style.backgroundColor = document.getElementById('bgColor').value;
+        card.style.backgroundImage = 'none';
+    } else {
+        card.style.background = bgValue + ' ' + document.getElementById('bgColor').value;
+    }
+    
+    document.getElementById('previewBusinessName').textContent = document.getElementById('businessName').value || 'Tu Negocio';
+    document.getElementById('previewBusinessName').style.color = document.getElementById('nameColor').value;
+    
+    document.getElementById('previewDay').textContent = document.getElementById('dayOfWeek').value || 'Día';
+    document.getElementById('previewDishName').textContent = document.getElementById('dishName').value || 'Tu plato';
+    
+    const titleEl = document.getElementById('previewDishName');
+    titleEl.style.color = document.getElementById('titleColor').value;
+    titleEl.style.fontFamily = document.getElementById('fontFamily').value;
+    titleEl.style.fontSize = document.getElementById('titleSize').value + 'px';
+    titleEl.style.fontWeight = document.getElementById('boldTitle').checked ? 'bold' : 'normal';
+    
+    document.getElementById('previewDescription').textContent = document.getElementById('dishDescription').value || 'Descripción';
+    document.getElementById('previewDescription').style.color = document.getElementById('textColor').value;
+    document.getElementById('previewDescription').style.fontFamily = document.getElementById('fontFamily').value;
+    document.getElementById('previewDescription').style.fontSize = document.getElementById('bodySize').value + 'px';
+    
+    document.getElementById('previewPrice').textContent = document.getElementById('price').value || '$0';
+    document.getElementById('previewPrice').style.color = document.getElementById('priceColor').value;
+    document.getElementById('previewSchedule').textContent = document.getElementById('schedule').value || 'Horario';
+    document.getElementById('previewSchedule').style.color = document.getElementById('textColor').value;
+    
+    document.getElementById('titleSizeValue').textContent = document.getElementById('titleSize').value + 'px';
+    document.getElementById('bodySizeValue').textContent = document.getElementById('bodySize').value + 'px';
+    
+    const fotosActivas = getFotosActivas();
+    if (fotosActivas.length > 0) {
+        if (fotos[indiceActual] === null) {
+            indiceActual = fotos.indexOf(fotosActivas[0]);
+        }
+        document.getElementById('galleryImg').src = fotos[indiceActual];
+        document.getElementById('galleryImg').style.display = 'block';
+        document.getElementById('galleryPlaceholder').style.display = 'none';
+        document.getElementById('galleryNav').style.display = 'flex';
+        document.getElementById('galleryCounter').style.display = 'block';
+        const indiceEnActivas = fotosActivas.indexOf(fotos[indiceActual]);
+        document.getElementById('galleryCounter').textContent = (indiceEnActivas + 1) + '/' + fotosActivas.length;
+    } else {
+        document.getElementById('galleryImg').style.display = 'none';
+        document.getElementById('galleryPlaceholder').style.display = 'block';
+        document.getElementById('galleryNav').style.display = 'none';
+        document.getElementById('galleryCounter').style.display = 'none';
+    }
+    
+    let info = '';
+    if (document.getElementById('phone1').value) info += '<div>📱 ' + document.getElementById('phone1').value + '</div>';
+    if (document.getElementById('phone2').value) info += '<div>📱 ' + document.getElementById('phone2').value + '</div>';
+    if (document.getElementById('address').value) info += '<div>📍 ' + document.getElementById('address').value + '</div>';
+    if (document.getElementById('instagram').value) info += '<div>📷 ' + document.getElementById('instagram').value + '</div>';
+    if (document.getElementById('facebook').value) info += '<div>👍 ' + document.getElementById('facebook').value + '</div>';
+    if (document.getElementById('reservation').value) info += '<div>📅 ' + document.getElementById('reservation').value + '</div>';
+    if (document.getElementById('menuUrl').value) info += '<div>📄 <a href="' + document.getElementById('menuUrl').value + '" target="_blank">Ver menú</a></div>';
+    
+    document.getElementById('previewInfo').innerHTML = info || '<p style="margin:0; color:#999; font-size:11px;">Agrega información de contacto</p>';
+}
+
+function downloadCard() {
+    const card = document.querySelector('.preview-card');
+    const canvas = document.createElement('canvas');
+    const rect = card.getBoundingClientRect();
+    canvas.width = Math.ceil(rect.width * 2);
+    canvas.height = Math.ceil(rect.height * 2);
+    const ctx = canvas.getContext('2d');
+    ctx.scale(2, 2);
+    ctx.drawImage(card, 0, 0);
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    link.download = 'tarjeta-' + (document.getElementById('businessName').value || 'oferta') + '.png';
+    link.click();
+}
+
+function shareWhatsapp() {
+    const texto = '🍽️ *' + (document.getElementById('businessName').value || 'Restaurante') + '*\n\n' +
+        (document.getElementById('dayOfWeek').value ? document.getElementById('dayOfWeek').value + ' - Plato del día\n\n' : '') +
+        '*' + (document.getElementById('dishName').value || 'Plato') + '*\n' +
+        (document.getElementById('dishDescription').value || '') + '\n\n' +
+        '💰 ' + (document.getElementById('price').value || 'Consultar') + '\n' +
+        '🕐 ' + (document.getElementById('schedule').value || 'Consultar') + '\n\n' +
+        '📱 ' + (document.getElementById('phone1').value || 'Contacto');
+    
+    window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+}
+
+updatePreview();
+loadFromStorage();
+</script>
+</body>
+</html>
